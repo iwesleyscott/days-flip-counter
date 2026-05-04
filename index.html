@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,10 +83,10 @@
 </div>
 
 <script>
-  // ââ Parse query params ââ
+  // ── Parse query params ──
   const params = new URLSearchParams(window.location.search);
 
-  // ?d=YYYYMMDD â fallback: 365 days from today
+  // ?d=YYYYMMDD — fallback: 365 days from today
   function parseTarget() {
     const raw = params.get('d');
     if (raw && /^\d{8}$/.test(raw)) {
@@ -98,40 +99,83 @@
     return def;
   }
 
-  // ?bg=rrggbb or ?bg=rgb â # optional
-  function parseBg() {
-    const raw = (params.get('bg') || '').replace(/^#/, '');
+  // ?bg=rrggbb or ?bg=rgb — # optional (page background)
+  // ?board=rrggbb or ?board=rgb — # optional (flip board background)
+  function parseColor(key) {
+    const raw = (params.get(key) || '').replace(/^#/, '');
     if (/^[0-9a-fA-F]{6}$/.test(raw)) return `#${raw}`;
     if (/^[0-9a-fA-F]{3}$/.test(raw)) return `#${raw}`;
     return null;
   }
 
-  const TARGET = parseTarget();
-  const bgColor = parseBg();
-  if (bgColor) document.body.style.background = bgColor;
+  // ?labelcolor=rrggbb  — color of "days remaining", "days", "until …" text
+  // ?labelsize=N         — font size scale % for labels (e.g. 80, 100, 140)
+  // ?tilecolor=rrggbb    — background of the flip tiles
+  // ?numcolor=rrggbb     — color of the numbers on the tiles
+  // ?numsize=N           — number font size in px (default 46)
+
+  function parseIntParam(key, min, max, def) {
+    const v = parseInt(params.get(key), 10);
+    return (!isNaN(v) && v >= min && v <= max) ? v : def;
+  }
+
+  function adjustBrightness(hex, factor) {
+    const h = hex.replace(/^#/,'');
+    const full = h.length === 3
+      ? h.split('').map(c => c+c).join('')
+      : h;
+    const r = Math.round(parseInt(full.slice(0,2),16) * factor);
+    const g = Math.round(parseInt(full.slice(2,4),16) * factor);
+    const b = Math.round(parseInt(full.slice(4,6),16) * factor);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  const TARGET      = parseTarget();
+  const bgColor     = parseColor('bg');
+  const boardColor  = parseColor('board');
+  const labelColor  = parseColor('labelcolor');
+  const labelSize   = parseIntParam('labelsize', 50, 300, 100);
+  const tileColor   = parseColor('tilecolor');
+  const numColor    = parseColor('numcolor');
+  const numSize     = parseIntParam('numsize', 12, 120, 46);
+
+  if (bgColor)    document.body.style.background = bgColor;
+  if (boardColor) document.querySelector('.board').style.background = boardColor;
+
+  if (labelColor || labelSize !== 100) {
+    const s = document.createElement('style');
+    const col = labelColor || 'inherit';
+    const sc  = labelSize / 100;
+    s.textContent = `
+      .row-label   { color: ${col} !important; font-size: calc(0.52rem * ${sc}) !important; }
+      .days-word   { color: ${col} !important; font-size: calc(0.58rem * ${sc}) !important; }
+      .target-line { color: ${col} !important; font-size: calc(0.48rem * ${sc}) !important; }
+      .target-line em { color: ${col} !important; }
+    `;
+    document.head.appendChild(s);
+  }
 
   const N = 3;
 
   document.getElementById('target-display').textContent =
     TARGET.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 
-  // ââ Tile dimensions (logical px, canvas uses 2x for retina) ââ
+  // ── Tile dimensions (logical px, canvas uses 2x for retina) ──
   const TW = 56, TH = 78;
   const DPR = window.devicePixelRatio || 1;
 
-  const COLOR_TOP    = '#242218';
-  const COLOR_BOT    = '#191710';
-  const COLOR_TEXT   = '#f5e97a';
-  const COLOR_SHADOW = '#9a8320';
-  const COLOR_HINGE  = '#080700';
-  const FONT_SIZE    = 46; // px logical
+  const COLOR_TOP   = tileColor ? adjustBrightness(tileColor, 1.0) : '#242218';
+  const COLOR_BOT   = tileColor ? adjustBrightness(tileColor, 0.82) : '#191710';
+  const COLOR_TEXT  = numColor  || '#f5e97a';
+  const COLOR_HINGE = '#080700';
+  const FONT_SIZE   = numSize;
 
   // Wait for font to load before drawing
   const fontReady = document.fonts
     ? document.fonts.load(`${FONT_SIZE}px "Share Tech Mono"`)
     : Promise.resolve();
 
-  // ââ Draw helpers ââ
+  // ── Draw helpers ──
 
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -208,7 +252,7 @@
     ctx.fillRect(0, TH/2 - 1, TW, 2);
   }
 
-  // ââ Full static tile draw ââ
+  // ── Full static tile draw ──
   function drawStatic(ctx, ch) {
     ctx.clearRect(0, 0, TW, TH);
     drawHalf(ctx, ch, 'top', 1);
@@ -216,14 +260,14 @@
     drawHinge(ctx);
   }
 
-  // ââ Flip animation using scaleY trick ââ
-  // Phase 1: top flap falls  (scaleY 1â0, showing old char top half shrinking)
-  // Phase 2: top flap continues (scaleY 0â-1 reveals new char top half growing down â but we skip this and just snap)
-  // Phase 3: bot flap falls  (scaleY -1â0â1... use a similar trick but from bottom)
+  // ── Flip animation using scaleY trick ──
+  // Phase 1: top flap falls  (scaleY 1→0, showing old char top half shrinking)
+  // Phase 2: top flap continues (scaleY 0→-1 reveals new char top half growing down — but we skip this and just snap)
+  // Phase 3: bot flap falls  (scaleY -1→0→1... use a similar trick but from bottom)
   //
   // Simpler & reliable approach:
-  // Phase 1 (0â50%): top flap shrinks from mid upward (scaleY 1â0 from bottom edge)
-  // Phase 2 (50â100%): bot flap grows from mid downward (scaleY 0â1 from top edge)
+  // Phase 1 (0–50%): top flap shrinks from mid upward (scaleY 1→0 from bottom edge)
+  // Phase 2 (50–100%): bot flap grows from mid downward (scaleY 0→1 from top edge)
   // Static top already shows NEW char. Static bot shows OLD until phase 2 starts.
 
   function makeFlipState(fromCh, toCh) {
@@ -242,8 +286,8 @@
       drawHalf(ctx, fromCh,'bot', 1);
 
       // Animate: top flap (fromCh top half) shrinks toward hinge
-      // scaleY from 1 â 0, transform origin = bottom of top half = mid
-      const scale = 1 - (progress / 0.5); // 1â0
+      // scaleY from 1 → 0, transform origin = bottom of top half = mid
+      const scale = 1 - (progress / 0.5); // 1→0
       const brightness = 0.5 + 0.5 * scale; // dims as it falls
       const flapH = mid * scale;
 
@@ -266,7 +310,7 @@
       drawHalf(ctx, toCh, 'bot', 1);
 
       // Animate: bot flap (toCh bot half) grows from hinge downward
-      const scale = (progress - 0.5) / 0.5; // 0â1
+      const scale = (progress - 0.5) / 0.5; // 0→1
       const brightness = 0.5 + 0.5 * scale;
       const flapH = mid * scale;
 
@@ -286,7 +330,7 @@
     drawHinge(ctx);
   }
 
-  // ââ Tile objects ââ
+  // ── Tile objects ──
   const tiles = [];
   const digitsEl = document.getElementById('digits');
 
@@ -309,7 +353,7 @@
     });
   }
 
-  // ââ Render loop per tile ââ
+  // ── Render loop per tile ──
   function startFlip(tile, newCh) {
     if (tile.current === newCh) return;
     const fromCh = tile.current;
