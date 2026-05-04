@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,30 +10,21 @@
 
     html, body {
       width: 100%; height: 100%;
-      background: #1a1610;
+      background: #2e2e2e;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       overflow: hidden;
       font-family: 'Share Tech Mono', monospace;
     }
 
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 3px,
-        rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px
-      );
-      pointer-events: none; z-index: 999;
-    }
 
     .board {
-      background: #111009;
-      border: 2px solid #252210;
+      background: #444444;
+      border: 2px solid #696969;
       border-radius: 8px;
       padding: 24px 32px 20px;
       box-shadow:
-        0 0 0 1px #080700,
+        0 0 0 1px #2a2a2a,
         0 12px 50px rgba(0,0,0,0.85),
         inset 0 1px 0 rgba(255,255,200,0.03);
       display: flex; flex-direction: column;
@@ -44,7 +34,7 @@
 
     .screw {
       position: absolute; width: 7px; height: 7px; border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #3a3720, #141310);
+      background: radial-gradient(circle at 35% 30%, #696969, #2e2e2e);
       box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,180,0.08);
     }
     .screw.tl { top:9px; left:9px; } .screw.tr { top:9px; right:9px; }
@@ -52,7 +42,7 @@
 
     .row-label {
       font-size: 0.52rem; letter-spacing: 0.32em;
-      text-transform: uppercase; color: #5a5228;
+      text-transform: uppercase; color: #8fde33;
     }
 
     .digits { display: flex; gap: 6px; align-items: center; }
@@ -64,9 +54,9 @@
     }
 
     .meta { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .days-word { font-size: 0.58rem; letter-spacing: 0.38em; text-transform: uppercase; color: #5a5228; }
-    .target-line { font-size: 0.48rem; letter-spacing: 0.18em; text-transform: uppercase; color: #3e3920; }
-    .target-line em { font-style: normal; color: #6a6030; }
+    .days-word { font-size: 0.58rem; letter-spacing: 0.38em; text-transform: uppercase; color: #8fde33; }
+    .target-line { font-size: 0.48rem; letter-spacing: 0.18em; text-transform: uppercase; color: #696969; }
+    .target-line em { font-style: normal; color: #abe766; }
   </style>
 </head>
 <body>
@@ -164,10 +154,10 @@
   const TW = 56, TH = 78;
   const DPR = window.devicePixelRatio || 1;
 
-  const COLOR_TOP   = tileColor ? adjustBrightness(tileColor, 1.0) : '#242218';
-  const COLOR_BOT   = tileColor ? adjustBrightness(tileColor, 0.82) : '#191710';
-  const COLOR_TEXT  = numColor  || '#f5e97a';
-  const COLOR_HINGE = '#080700';
+  const COLOR_TOP   = tileColor ? adjustBrightness(tileColor, 1.0) : '#3a3a3a';
+  const COLOR_BOT   = tileColor ? adjustBrightness(tileColor, 0.82) : '#2e2e2e';
+  const COLOR_TEXT  = numColor  || '#73d700';
+  const COLOR_HINGE = '#1a1a1a';
   const FONT_SIZE   = numSize;
 
   // Wait for font to load before drawing
@@ -231,7 +221,7 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     // glow
-    ctx.shadowColor = 'rgba(245,233,122,0.3)';
+    ctx.shadowColor = 'rgba(115,215,0,0.35)';
     ctx.shadowBlur = 10;
     ctx.fillStyle = applyBrightness(COLOR_TEXT, brightness);
     ctx.fillText(ch, W / 2, H / 2); // always center in FULL height
