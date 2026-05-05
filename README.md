@@ -105,7 +105,7 @@ Controls the color of the digits displayed on the flip tiles.
 | | |
 |---|---|
 | Format | 3 or 6 character hex, `#` optional |
-| Default | `73d700` (Flix Green) |
+| Default | `73d700` (Fancy Green) |
 | Example | `numcolor=ffffff` |
 
 ```
@@ -138,7 +138,7 @@ Controls the color of all label text: "days remaining", "days", and the target d
 | | |
 |---|---|
 | Format | 3 or 6 character hex, `#` optional |
-| Default | `8fde33` / `abe766` (Flix Green variants) |
+| Default | `8fde33` / `abe766` (Fancy Green variants) |
 | Example | `labelcolor=ffffff` |
 
 ```
