@@ -22,7 +22,7 @@ The widget is a single `index.html` file with no dependencies or build step. All
 https://iwesleyscott.github.io/days-flip-counter/
 ```
 
-Displays a countdown to **365 days from today** using default Flix brand colors.
+Displays a countdown to **365 days from today** using default green brand colors.
 
 ### With a target date
 
@@ -199,12 +199,12 @@ Controls box shadows on the board, tiles, and screws, and the number glow effect
 
 ## Examples
 
-### Default Flix branding
+### Default Green branding
 ```
 https://iwesleyscott.github.io/days-flip-counter/
 ```
 
-### Flix branding, lighter palette, shadows off
+### Green branding, lighter palette, shadows off
 ```
 https://iwesleyscott.github.io/days-flip-counter/?bg=444444&board=696969&tilecolor=4a4a4a&numcolor=73d700&labelcolor=abe766&shadow=0
 ```
