@@ -104,6 +104,8 @@
   // ?tilecolor=rrggbb    — background of the flip tiles
   // ?numcolor=rrggbb     — color of the numbers on the tiles
   // ?numsize=N           — number font size in px (default 46)
+  // ?scale=N             — resize entire board element, % (default 100)
+  // ?shadow=0            — disable all shadows (default on)
 
   function parseIntParam(key, min, max, def) {
     const v = parseInt(params.get(key), 10);
@@ -129,9 +131,28 @@
   const tileColor   = parseColor('tilecolor');
   const numColor    = parseColor('numcolor');
   const numSize     = parseIntParam('numsize', 12, 120, 46);
+  const boardScale  = parseIntParam('scale', 10, 300, 100);
+  const shadowOff   = params.get('shadow') === '0';
 
-  if (bgColor)    document.body.style.background = bgColor;
-  if (boardColor) document.querySelector('.board').style.background = boardColor;
+  if (bgColor) {
+    document.body.style.background = bgColor;
+    document.documentElement.style.background = bgColor;
+  }
+  const boardEl = document.querySelector('.board');
+  if (boardColor) boardEl.style.background = boardColor;
+  if (boardScale !== 100) {
+    boardEl.style.transform = `scale(${boardScale / 100})`;
+    boardEl.style.transformOrigin = 'center center';
+  }
+  if (shadowOff) {
+    const s = document.createElement('style');
+    s.textContent = `
+      .board       { box-shadow: none !important; }
+      .screw       { box-shadow: none !important; }
+      canvas.tile  { box-shadow: none !important; }
+    `;
+    document.head.appendChild(s);
+  }
 
   if (labelColor || labelSize !== 100) {
     const s = document.createElement('style');
@@ -223,7 +244,7 @@
     ctx.textBaseline = 'middle';
     // glow
     ctx.shadowColor = 'rgba(115,215,0,0.35)';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = shadowOff ? 0 : 10;
     ctx.fillStyle = applyBrightness(COLOR_TEXT, brightness);
     ctx.fillText(ch, W / 2, H / 2); // always center in FULL height
     ctx.restore();
